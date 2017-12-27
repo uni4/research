@@ -3,34 +3,64 @@
 
 import cv2
 import numpy as np
-  
-# 画像を取得
-img = cv2.imread("aa.jpg")
- 
-# フレームをHSVに変換
-hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
- 
-# 取得する色の範囲を指定する
-lower = np.array([0, 30, 60])
-upper = np.array([20, 150, 255])
- 
-# 指定した色に基づいたマスク画像の生成
-img_mask = cv2.inRange(hsv, lower, upper)
- 
-#フレーム画像とマスク画像の共通の領域を抽出する。
-img_color = cv2.bitwise_and(img, img, mask=img_mask)
- 
-cv2.imshow("SHOW COLOR IMAGE", img_color)
+import sys
+
+def mask(param):
+	param = sys.argv  
+	# 画像を取得
+	img = cv2.imread("%s"%param[1])
+
+	# フレームをHSVに変換
+	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+	# 取得する色の範囲を指定する
+	lower = np.array([0, 30, 60])
+	upper = np.array([20, 150, 255])
+
+	# 指定した色に基づいたマスク画像の生成
+	img_mask = cv2.inRange(hsv, lower, upper)
+
+	#フレーム画像とマスク画像の共通の領域を抽出する。
+	img_color = cv2.bitwise_and(img, img, mask=img_mask)
+	img_color = cv2.cvtColor(img_color, cv2.COLOR_HSV2BGR)
 
 
-# ファイルに保存
-cv2.imwrite("skin.jpg", img_color)
- 
-    # qを押したら終了
-    #k = cv2.waitKey(1)
-    #if k == ord('q'):
-    #    break
+	return img_color
 
-    # 終了処理
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+def labelling(im):
+    height, width = im.shape[:2]
+
+    # グレースケール変換
+    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+
+    # 2値化
+    gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+
+    # ラベリング処理
+    label = cv2.connectedComponentsWithStats(gray)
+
+    data = np.delete(label[2], 0, 0)
+    max_index = np.argsort(data[:,4])[::-1][0] + 1
+
+    dst = label[1].reshape((-1))
+
+    for index in range(len(dst)):
+        if dst[index] == max_index:
+            dst[index] = 255;
+        else:
+            dst[index] = 0;
+
+    dst = dst.reshape((height, width))
+
+    image, contours, hierarchy = cv2.findContours(gray,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    im_con = cv2.drawContours(dst, contours, -1, (255,255,255), -1)
+
+    cv2.imwrite("kekka.jpg",im_con)
+    cv2.imwrite("kekka2.jpg",dst)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
+
+
+if __name__ == '__main__':
+	param = sys.argv
+	labelling(mask(param))
