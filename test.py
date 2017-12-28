@@ -1,14 +1,11 @@
 import cv2
 import numpy as np
-import sys
 
 def main():
     # 入力画像の取得
     im = cv2.imread("skin.jpg")
     height = im.shape[0]
     width = im.shape[1]
-    param = sys.argv
-    kernel = np.ones((5, 5), np.uint8)
 
     # グレースケール変換
     gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
@@ -50,12 +47,12 @@ def main():
     print("各ブロブの外接矩形の幅", data[:,2])
     print("各ブロブの外接矩形の高さ", data[:,3])
     print("各ブロブの面積", data[:,4])
-    print("各ブロブの中心座標:\n",center)
+    #print("各ブロブの中心座標:\n",center)
 
     #cv2.imshow("gazou", dst)
-    cv2.imwrite("kekka.jpg", dst)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    cv2.imwrite("kekka_test.jpg", dst)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':

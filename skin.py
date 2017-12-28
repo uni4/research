@@ -5,7 +5,7 @@ import cv2
 import numpy as np
   
 # 画像を取得
-img = cv2.imread("aa.jpg")
+img = cv2.imread("aaa.jpg")
  
 # フレームをHSVに変換
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
