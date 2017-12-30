@@ -51,9 +51,9 @@ def labelling(im):
             dst[index] = 0;
 
     dst = dst.reshape((height, width))
-    cv2.imwrite("kekka2.jpg",dst)
+    cv2.imwrite("kekka_totyu.jpg",dst)
 
-    im_re = cv2.imread("kekka2.jpg")
+    im_re = cv2.imread("kekka_totyu.jpg")
 
     # グレースケール変換
     gray2 = cv2.cvtColor(im_re, cv2.COLOR_BGR2GRAY)
@@ -66,7 +66,7 @@ def labelling(im):
     opening = cv2.morphologyEx(im_con, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(im_con, cv2.MORPH_CLOSE, kernel)
     cv2.imwrite("opening.jpg", opening)
-    cv2.imwrite("closing", closing)
+    cv2.imwrite("closing.jpg", closing)
 
 if __name__ == '__main__':
     param = sys.argv
