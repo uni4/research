@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import sys
 
+#肌色領域のみを抽出
 def mask(param):
     # 画像を取得
     img = cv2.imread("%s"%param[1])
@@ -27,6 +28,7 @@ def mask(param):
 
     return img_color
 
+#最大面積を抽出することでノイズを除去
 def labelling(im):
     height, width = im.shape[:2]
     kernel = np.ones((5,5),np.uint8)
@@ -52,7 +54,6 @@ def labelling(im):
 
     dst = dst.reshape((height, width))
     cv2.imwrite("kekka_totyu.jpg",dst)
-
     im_re = cv2.imread("kekka_totyu.jpg")
 
     # グレースケール変換
@@ -63,11 +64,9 @@ def labelling(im):
     im_con = cv2.drawContours(im_re, contours, 0, (255,255,255), -1,)
 
     cv2.imwrite("kekka.jpg",im_con)
-    opening = cv2.morphologyEx(im_con, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(im_con, cv2.MORPH_CLOSE, kernel)
-    cv2.imwrite("opening.jpg", opening)
-    cv2.imwrite("closing.jpg", closing)
+    cv2.imwrite("closing5.jpg", closing)
 
 if __name__ == '__main__':
     param = sys.argv
-    labelling(mask(param))
+    gazou = labelling(mask(param))
