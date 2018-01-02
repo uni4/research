@@ -15,37 +15,41 @@ def main():
 	M = cv2.moments(cnt)
 	cx = int(M['m10']/M['m00'])
 	cy = int(M['m01']/M['m00'])
-	cv2.circle(im_con,(cx,cy), 20,(255,0,0),-1)
+	cv2.circle(im_con,(cx,cy), 20,(0,0,255),-1)
 
-	#凸包の取得
-	hull = cv2.convexHull(cnt,returnPoints = False)
-	defects = cv2.convexityDefects(cnt,hull)
+	aa,bb,cc = (0,100,2000)
+	list = [[]]
+	ren = len(contours[0][:,:])
 
-	for i in range(defects.shape[0]):
-		s,e,f,d = defects[i,0]
-		start = tuple(cnt[s][0])
-		end = tuple(cnt[e][0])
-		far = tuple(cnt[f][0])
-		#cv2.line(im_con,start,end,[0,255,0],2)
-		cv2.circle(im_con,far,20,[0,0,255],-1)
 
-	"""
-	for i in range(defects.shape[0]):
-		far = int(defects[:,0][i,0])
-		cv2.circle(im_con,far,20[0,0,255],-1)
+	while cc <= ren - 1:
+		p1 = contours[0][aa,0]
+		p2 = contours[0][bb,0]
+		p3 = contours[0][cc,0]
+		c1x = p1[0] - 0#本来はp2だが原点をp2にする際に必要な計算であり、p2を(0,0)としている
+		c1y = p1[1] - 0
+		c2x = p3[0] - 0
+		c2y = p3[1] - 0
+		nai_c1 = np.sqrt(pow(c1x,2) + pow(c1y,2))
+		nai_c2 = np.sqrt(pow(c2x,2) + pow(c2y,2))
+		c1_c2 = (c1x * c2x) + (c1y * c2y)#c1・c2のこと
+		cos = c1_c2 / (nai_c1 * nai_c2)
+		deg = np.rad2deg(cos)
 
-	"""
+		if(cos >0 and cos < 60):
+			cv2.circle(im_con,(p2[0],p2[1]), 10,(0,0,255),-1)
+
+		aa += 1
+		bb += 1
+		cc += 1
+		print(cos)
 
 	cv2.imwrite("fingertip_test.jpg", im_con)
 
-
-	print("凸包", defects[:,0])
-	#print("輪郭画像", image)
-	#print("輪郭", contours)
+	#print("輪郭", contours[0][0,0])
 	#print("輪郭の階層", hierarchy)
-	
-
-
+	print("長さ", ren)
+	print("リスト", list)
 
 
 if __name__ == '__main__':
