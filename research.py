@@ -31,7 +31,7 @@ def mask(param):
 #最大面積を抽出することでノイズを除去
 def labelling(im):
     height, width = im.shape[:2]
-    kernel = np.ones((5,5),np.uint8)
+    kernel = np.ones((10,10),np.uint8)
 
     # グレースケール変換
     gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
@@ -60,12 +60,21 @@ def labelling(im):
     gray2 = cv2.cvtColor(im_re, cv2.COLOR_BGR2GRAY)
     gray2 = cv2.threshold(gray2, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
+    #第3結果を0にすれば一番外側の輪郭のみを描画するため中身を全て白にできる
     image, contours, hierarchy = cv2.findContours(gray2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     im_con = cv2.drawContours(im_re, contours, 0, (255,255,255), -1,)
 
+    #もう一度輪郭を持って中を白くする
+    #im_con = cv2.cvtColor(im_con, cv2.COLOR_BGR2GRAY)
+    #im_con = cv2.threshold(im_con, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    #image, contours2, hierarchy = cv2.findContours(im_con,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    #im_con = cv2.drawContours(im_con, contours2, 0, (255,255,255), -1,)
+
     cv2.imwrite("kekka.jpg",im_con)
     closing = cv2.morphologyEx(im_con, cv2.MORPH_CLOSE, kernel)
-    cv2.imwrite("closing5.jpg", closing)
+    cv2.imwrite("closing10.jpg", closing)
+
+    return closing
 
 if __name__ == '__main__':
     param = sys.argv

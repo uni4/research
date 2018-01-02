@@ -1,4 +1,5 @@
 #http://www.tech-tech.xyz/archives/opencv_opening_closing.html
+#http://labs.eecs.tottori-u.ac.jp/sd/Member/oyamada/OpenCV/html/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
 #オープニングとクロージング処理
 import cv2
 import numpy as np
