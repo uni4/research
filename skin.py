@@ -5,7 +5,7 @@ import cv2
 import numpy as np
   
 # 画像を取得
-img = cv2.imread("aaa.jpg")
+img = cv2.imread("range-1.jpg")
  
 # フレームをHSVに変換
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -24,7 +24,7 @@ cv2.imshow("SHOW COLOR IMAGE", img_color)
 
 
 # ファイルに保存
-cv2.imwrite("skin.jpg", img_color)
+cv2.imwrite("yubi.jpg", img_color)
  
     # qを押したら終了
     #k = cv2.waitKey(1)
