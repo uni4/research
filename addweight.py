@@ -19,7 +19,7 @@ def main():
 
 	#画像の合成
 	img_addweight = addweight(img,1,0.5,0)
-	cv2.imwrite("imadd.png",img_addweight)
+	cv2.imwrite("imadd.jpg",img_addweight)
 	    
 
  

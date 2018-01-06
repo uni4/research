@@ -42,28 +42,33 @@ def addweight(imgA,imgB,alpha,beta,ganma):
 def main():
 	# 入力画像を読み込み
 	img = cv2.imread("%s"%param[1])
-	#if len(param) > 1:
-		#img2 = cv2.imread("%s"%param[2])
 
 	# グレースケール変換
 	gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 	    
 	# ガウシアンフィルタ	
 	dst3 = cv2.GaussianBlur(img, ksize=(3,3), sigmaX=1.3)
-	print("aa")
 
 	# ハイパスフィルタ処理
 	himg = highpass_filter(img, 0.8)
-	print("bb")
 
+	#ハイパスフィルタの係数　ようはラプラシアンフィルタ
 	kernel = np.array([[-1, -1, -1],
                        [-1, 8, -1],
                        [-1, -1, -1]])
+	k = 1.0
+	shape_kernel = np.array([
+				[-k, -k, -k],
+				[-k, 1 + 8 * k, -k],
+				[-k, -k, -k]
+            ])
     
     #ハイパスフィルタ方法2  
 	#himg2 = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)    
 	himg2 = cv2.filter2D(img, -1, kernel)
-	print("cc")
+
+	#先鋭化フィルター
+	img_shape = cv2.filter2D(img, -1, shape_kernel)
 	
 
 	#画像の合成
@@ -74,6 +79,7 @@ def main():
 	cv2.imwrite("highpass.jpg", himg)
 	cv2.imwrite("highpass2.jpg", himg2)
 	cv2.imwrite("addweight.jpg", img_addweight)
+	cv2.imwrite("shapeeing.jpg", img_shape)
 
  
 if __name__ == "__main__":

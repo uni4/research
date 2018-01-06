@@ -5,9 +5,22 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
+#画像を合成するモジュール
+def addweight(img,alpha,beta,ganma):	
+	gauss = cv2.GaussianBlur(img, ksize=(3,3), sigmaX=1.3)
+
+	kernel = np.array([[-1, -1, -1],
+                       [-1, 8, -1],
+                       [-1, -1, -1]])
+      
+	himg2 = cv2.filter2D(img, -1, kernel)
+	im_add = cv2.addWeighted(gauss, alpha, himg2, beta, ganma)
+	return im_add
+
 def main():
 	image = cv2.imread("%s"%param[1])
 	im_filter = cv2.imread("%s"%param[2])
+	c_kernel = np.ones((7,7),np.uint8)
 
 	#フィルターを2値化してラベリングする
 	gray = cv2.cvtColor(im_filter, cv2.COLOR_BGR2GRAY)
@@ -19,6 +32,7 @@ def main():
 	data = np.delete(label[2], 0, 0)
 	center = np.delete(label[3], 0, 0)
 	max_index = np.argsort(data[:,4])[::-1][0] + 1
+	#cv2.circle(image, (int(center[max_index][0]),int(center[max_index][1])),10,(255,0,0),-1)
 
 	#指先を染めるための色情報を作る
 	flesh = image[int(center[max_index][0]),int(center[max_index][1])]
@@ -47,6 +61,9 @@ def main():
 		upper = np.array([20, 150, 255])
 		mask = cv2.inRange(hsv, lower, upper)
 		img_mask = cv2.bitwise_and(img_copy, img_copy, mask=mask)
+		img_mask = cv2.morphologyEx(img_mask, cv2.MORPH_CLOSE, c_kernel)
+		img_cc = addweight(img_copy,1,0.5,0)
+		img_cc = cv2.morphologyEx(img_mask, cv2.MORPH_OPEN, c_kernel)
 		gray2 = cv2.threshold(mask, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 		hist_mask = cv2.calcHist([img_copy],[0],mask,[256],[0,256])
 		plt.subplot(index + 221), plt.plot(hist_mask)
@@ -58,9 +75,10 @@ def main():
 				green = img_mask[y_index, x_index, 1]
 				red = img_mask[y_index, x_index, 2]
 				if blue != 0 and green != 0 and red != 0:
-					img_copy[y_index, x_index] = img_copy[y_index, x_index]
+					img_copy[y_index, x_index] = img_cc[y_index, x_index]
 
 		cv2.imwrite("range_" + str(index+1) +".jpg", img_copy)
+		cv2.imwrite("mask_" + str(index+1) +".jpg", img_mask)
 
 	cv2.imwrite("print.jpg", image)
 	plt.xlim([0,256])
