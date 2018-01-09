@@ -31,6 +31,11 @@ def main():
 	image = cv2.imread("%s"%param[1])
 	im_filter = cv2.imread("%s"%param[2])
 	c_kernel = np.ones((7,7),np.uint8)
+	#テスト
+	model = cv2.imread("shimon.jpg")
+	x_gra,y_gra = gravity(image)
+	model_img = image[y_gra - 200:y_gra + 200,x_gra - 200:x_gra + 200]
+	#cv2.circle(image, (x_gra,y_gra), 4, 100, 255, -1)
 
 	#フィルターを2値化してラベリングする
 	gray = cv2.cvtColor(im_filter, cv2.COLOR_BGR2GRAY)
@@ -46,9 +51,7 @@ def main():
 
 	#指先を染めるための色情報を作る
 	flesh = image[int(center[max_index][0]),int(center[max_index][1])]
-	x_gra,y_gra = gravity(image)
-	cv2.circle(image, (x_gra,y_gra), 4, 100, 255, -1)
-
+	
 	print("最大面積のラベル番号", max_index)
 	print("ブロブの個数:", n)
 	print("各ブロブの外接矩形の左上x座標", data[:,0])
@@ -88,6 +91,7 @@ def main():
 				red = img_mask[y_index, x_index, 2]
 				if blue != 0 and green != 0 and red != 0:
 					img_copy[y_index, x_index] = img_cc[y_index, x_index]
+					#img_copy[y_index, x_index] = model[y_index, x_index]
 
 		cv2.imwrite("range_" + str(index+1) +".jpg", img_copy)
 		cv2.imwrite("mask_" + str(index+1) +".jpg", img_mask)
