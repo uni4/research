@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+from PIL import Image
 
 #画像を合成するモジュール
 def addweight(img,alpha,beta,ganma):	
@@ -16,6 +17,15 @@ def addweight(img,alpha,beta,ganma):
 	himg2 = cv2.filter2D(img, -1, kernel)
 	im_add = cv2.addWeighted(gauss, alpha, himg2, beta, ganma)
 	return im_add
+
+#重心を計算するモジュール	
+def gravity(image):
+	image = cv2.imread("closing10.jpg")
+	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+	mu = cv2.moments(gray, False)
+	x,y= int(mu["m10"]/mu["m00"]) , int(mu["m01"]/mu["m00"])
+	return x,y
+
 
 def main():
 	image = cv2.imread("%s"%param[1])
@@ -36,6 +46,8 @@ def main():
 
 	#指先を染めるための色情報を作る
 	flesh = image[int(center[max_index][0]),int(center[max_index][1])]
+	x_gra,y_gra = gravity(image)
+	cv2.circle(image, (x_gra,y_gra), 4, 100, 255, -1)
 
 	print("最大面積のラベル番号", max_index)
 	print("ブロブの個数:", n)
@@ -52,7 +64,7 @@ def main():
 		y = data[index,1]
 		w = data[index,2]
 		h = data[index,3]
-		img_copy = image[y:y+h, x:x+w]
+		img_copy = image[y:y+h+10, x:x+w+10]
 		height, width = img_copy.shape[:2]
 
 		#ヒストグラムを作成する

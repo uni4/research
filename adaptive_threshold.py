@@ -37,7 +37,7 @@ def main():
 	#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
 	#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,11,2)
 	#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,11,2)
-	dst2 = threshold(gray, ksize=11, c=2)
+	dst2 = threshold(gray, ksize=15, c=2)
 
 	# 結果を出力
 	cv2.imwrite("adaptive_threshold.png", dst2)
