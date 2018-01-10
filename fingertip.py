@@ -1,5 +1,5 @@
 #http://www.cellstat.net/centroid/
-#輪郭が最大の重心座標を求める
+#輪郭が最大の重心座標を求める 指の位置を計算する
 import cv2
 import numpy as np
 import sys
@@ -17,7 +17,7 @@ def main():
 	cy = int(M['m01']/M['m00'])
 	cv2.circle(im_con,(cx,cy), 20,(0,0,255),-1)
 
-	aa,bb,cc = (0,100,2000)
+	aa,bb,cc = (0,100,200)
 	list = [[]]
 	ren = len(contours[0][:,:])
 
@@ -27,9 +27,9 @@ def main():
 		p2 = contours[0][bb,0]
 		p3 = contours[0][cc,0]
 		c1x = p1[0] - 0#本来はp2だが原点をp2にする際に必要な計算であり、p2を(0,0)としている
-		c1y = p1[1] - 0
-		c2x = p3[0] - 0
-		c2y = p3[1] - 0
+		c1y = p1[1] - 0#
+		c2x = p3[0] - 0#
+		c2y = p3[1] - 0#
 		nai_c1 = np.sqrt(pow(c1x,2) + pow(c1y,2))
 		nai_c2 = np.sqrt(pow(c2x,2) + pow(c2y,2))
 		c1_c2 = (c1x * c2x) + (c1y * c2y)#c1・c2のこと
@@ -42,7 +42,7 @@ def main():
 		aa += 1
 		bb += 1
 		cc += 1
-		print(cos)
+		#print(cos)
 
 	cv2.imwrite("fingertip_test.jpg", im_con)
 
