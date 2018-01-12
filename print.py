@@ -19,21 +19,26 @@ def addweight(img,alpha,beta,ganma):
 	return im_add
 
 #重心を計算するモジュール	
-def gravity(image):
-	image = cv2.imread("closing10.jpg")
+def gravity(image,p_number):
+	image = cv2.imread("closing10_" + str(p_number) + ".jpg")
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 	mu = cv2.moments(gray, False)
 	x,y= int(mu["m10"]/mu["m00"]) , int(mu["m01"]/mu["m00"])
 	return x,y
+"""
+#外部からfinger_editを呼びさす際にしようする
+def finger_edit_outside(param,gazou2,p_number):
+	pa = [param[0],param[p_number]]
+	im_outside = finger_edit(pa,gazou2,p_number)
+"""
 
-
-def finger_edit(image,im_filter):
-	image = cv2.imread("%s"%image[1])
+def finger_edit(image,im_filter,p_number):
+	image = cv2.imread("%s"%image[p_number])
 	#im_filter = cv2.imread("%s"%param[2])
 	c_kernel = np.ones((7,7),np.uint8)
 	#テスト
 	model = cv2.imread("shimon.jpg")
-	x_gra,y_gra = gravity(image)
+	x_gra,y_gra = gravity(image,p_number)
 	#model_img = image[y_gra - 200:y_gra + 200,x_gra - 200:x_gra + 200]
 	#cv2.circle(image, (x_gra,y_gra), 4, 100, 255, -1)
 
@@ -51,7 +56,8 @@ def finger_edit(image,im_filter):
 
 	#指先を染めるための色情報を作る
 	#flesh = image[int(center[max_index][0]),int(center[max_index][1])]
-	
+
+	"""
 	print("最大面積のラベル番号", max_index)
 	print("ブロブの個数:", n)
 	print("各ブロブの外接矩形の左上x座標", data[:,0])
@@ -59,9 +65,9 @@ def finger_edit(image,im_filter):
 	print("各ブロブの外接矩形の幅", data[:,2])
 	print("各ブロブの外接矩形の高さ", data[:,3])
 	print("各ブロブの面積", data[:,4])
-	#print("中心座標:\n",center[max_index])
+	"""
 	
-
+	print("指紋部分の処理開始")
 	for index in range(n):
 		x = data[index,0]
 		y = data[index,1]
@@ -83,7 +89,7 @@ def finger_edit(image,im_filter):
 		img_cc = cv2.morphologyEx(img_mask, cv2.MORPH_OPEN, c_kernel)
 		gray2 = cv2.threshold(mask, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 		hist_mask = cv2.calcHist([img_copy],[0],mask,[256],[0,256])
-		plt.subplot(index + 221), plt.plot(hist_mask)
+		#plt.subplot(index + 221), plt.plot(hist_mask)
 
 		#肌色の部分を変換する
 		for y_index in range(height):
@@ -92,20 +98,20 @@ def finger_edit(image,im_filter):
 				green = img_mask[y_index, x_index, 1]
 				red = img_mask[y_index, x_index, 2]
 				if blue != 0 and green != 0 and red != 0:
-					img_copy[y_index, x_index] = img_cc[y_index, x_index]
-					#img_copy[y_index, x_index] = model[y_index, x_index]
-
+					#img_copy[y_index, x_index] = img_cc[y_index, x_index]
+					img_copy[y_index, x_index] = [0,0,255]
 		cv2.imwrite("range_" + str(index+1) +".jpg", img_copy)
 		cv2.imwrite("mask_" + str(index+1) +".jpg", img_mask)
 
-	cv2.imwrite("print.jpg", image)
+	print("指紋部分の処理終了")
+	cv2.imwrite("print" + str(p_number) + ".jpg", image)
 	plt.xlim([0,256])
 	#plt.show()
 
 def main():
 	image = cv2.imread("%s"%param[1])
 	im_filter = cv2.imread("%s"%param[2])
-	finger_edit(param,im_filter)
+	finger_edit(param,im_filter,1)
 
 if __name__ == '__main__':
 	param = sys.argv
