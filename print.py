@@ -27,14 +27,14 @@ def gravity(image):
 	return x,y
 
 
-def main():
-	image = cv2.imread("%s"%param[1])
-	im_filter = cv2.imread("%s"%param[2])
+def finger_edit(image,im_filter):
+	image = cv2.imread("%s"%image[1])
+	#im_filter = cv2.imread("%s"%param[2])
 	c_kernel = np.ones((7,7),np.uint8)
 	#テスト
 	model = cv2.imread("shimon.jpg")
 	x_gra,y_gra = gravity(image)
-	model_img = image[y_gra - 200:y_gra + 200,x_gra - 200:x_gra + 200]
+	#model_img = image[y_gra - 200:y_gra + 200,x_gra - 200:x_gra + 200]
 	#cv2.circle(image, (x_gra,y_gra), 4, 100, 255, -1)
 
 	#フィルターを2値化してラベリングする
@@ -50,7 +50,7 @@ def main():
 	#cv2.circle(image, (int(center[max_index][0]),int(center[max_index][1])),10,(255,0,0),-1)
 
 	#指先を染めるための色情報を作る
-	flesh = image[int(center[max_index][0]),int(center[max_index][1])]
+	#flesh = image[int(center[max_index][0]),int(center[max_index][1])]
 	
 	print("最大面積のラベル番号", max_index)
 	print("ブロブの個数:", n)
@@ -59,7 +59,7 @@ def main():
 	print("各ブロブの外接矩形の幅", data[:,2])
 	print("各ブロブの外接矩形の高さ", data[:,3])
 	print("各ブロブの面積", data[:,4])
-	print("中心座標:\n",center[max_index])
+	#print("中心座標:\n",center[max_index])
 	
 
 	for index in range(n):
@@ -67,7 +67,9 @@ def main():
 		y = data[index,1]
 		w = data[index,2]
 		h = data[index,3]
-		img_copy = image[y:y+h+10, x:x+w+10]
+		#img_copy = image[y:y+h+10, x:x+w+10]
+		img_copy = image[y:y+h, x:x+w]
+
 		height, width = img_copy.shape[:2]
 
 		#ヒストグラムを作成する
@@ -99,6 +101,11 @@ def main():
 	cv2.imwrite("print.jpg", image)
 	plt.xlim([0,256])
 	#plt.show()
+
+def main():
+	image = cv2.imread("%s"%param[1])
+	im_filter = cv2.imread("%s"%param[2])
+	finger_edit(param,im_filter)
 
 if __name__ == '__main__':
 	param = sys.argv
