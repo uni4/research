@@ -97,9 +97,12 @@ def finger_edit(image,im_filter,p_number):
 				blue = img_mask[y_index, x_index, 0]
 				green = img_mask[y_index, x_index, 1]
 				red = img_mask[y_index, x_index, 2]
-				if blue != 0 and green != 0 and red != 0:
-					#img_copy[y_index, x_index] = img_cc[y_index, x_index]
-					img_copy[y_index, x_index] = [0,0,255]
+				b1 = img_cc[y_index, x_index,0] 
+				g1 = img_cc[y_index, x_index,1]
+				r1 = img_cc[y_index, x_index,2]  
+				if blue != 0 and green != 0 and red != 0 and b1 != 0 and g1 != 0 and r1 != 0:
+					img_copy[y_index, x_index] = img_cc[y_index, x_index]
+					#img_copy[y_index, x_index] = [0,0,255]
 		cv2.imwrite("range_" + str(index+1) +".jpg", img_copy)
 		cv2.imwrite("mask_" + str(index+1) +".jpg", img_mask)
 
