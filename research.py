@@ -65,7 +65,6 @@ def labelling(im,p_number):
 	#最大面積のラベル番号の部分は255にして、それ以外を0にする
 	dst[dst==max_index] = 255
 	dst[dst!=255] = 0
-	#dst = np.where(dst==1, 255, 0)
 
 	dst = dst.reshape((height, width))
 	cv2.imwrite("kekka_totyu.jpg",dst)
@@ -114,19 +113,23 @@ def yubisaki(im,p_number):
 	print("重心と各画素の距離を算出開始")
 	tt1 = time.time()
 
-	
+	"""
 	for y in range(height):
 		for x in range(width):
 			if dst[y][x] == max_index:
 				b = np.array([y,x])
 				list.append(distance.euclidean(a,b))
+	"""
+
+	list = np.array([distance.euclidean(a,dst[dst==max_index])])
+	print(list)
 
 	"""
 	y = range(0,height)
 	x = range(0,width)
 	#list = np.array([(y,x) for y in y for x in x distance.euclidean(a,[y,x]) if dst[y][x] == max_index])
 	list = np.array([(y,x) for y in y for x in x if dst[y][x] == max_index])
-	list = distance.euclidean(a,list)
+
 	"""
 
 	print("重心と各画素の距離を算出終了")
