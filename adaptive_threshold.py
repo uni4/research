@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import sys
+import os.path
 
 def threshold(src, ksize, c):
     
@@ -28,6 +29,7 @@ def threshold(src, ksize, c):
 def main():
 	# 入力画像を読み込み
 	img = cv2.imread("%s"%param[1])
+	name, ext = os.path.splitext(param[1])
 
 	# グレースケール変換
 	gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -37,10 +39,10 @@ def main():
 	#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
 	#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,11,2)
 	#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,11,2)
-	dst2 = threshold(gray, ksize=15, c=2)
+	dst2 = threshold(gray, ksize=9, c=2)
 
 	# 結果を出力
-	cv2.imwrite("adaptive_threshold.png", dst2)
+	cv2.imwrite(name + "_shimon" + ".tif", dst2)
 	cv2.imshow("adaptive_threshold",dst2)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
