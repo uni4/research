@@ -32,9 +32,9 @@ def main():
 				#画像の回転
 				R = cv2.getRotationMatrix2D((oy, ox), theta, scale)    # 回転変換行列の算出
 				dst = cv2.warpAffine(img, R, (width,height), flags=cv2.INTER_CUBIC)
+				dst = cv2.resize(dst, (256, 256), interpolation=cv2.INTER_LINEAR)
 				#dst = cv2.warpAffine(img, R, (height,width), flags=cv2.INTER_CUBIC)
 				#dst[dst==[0,0,0]] = [255,255,255]
-				dst = np.where(dst==[0,0,0], [255,255,255],dst)
 				dst = np.where(dst==[0,0,0], [255,255,255],dst)
 
 				# 結果を出力

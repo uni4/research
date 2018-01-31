@@ -17,7 +17,7 @@ def main():
 			img = cv2.imread(abs_name)
 			height, width = img.shape[:2]
 			# 方法2(OpenCV)
-			dst2 = cv2.resize(img, (300, 300), interpolation=cv2.INTER_LINEAR)
+			dst2 = cv2.resize(img, (256, 256), interpolation=cv2.INTER_LINEAR)
 			#dst2 = cv2.resize(img, (300, 300))
 			# 結果を出力
 			cv2.imwrite("cascade_directory/neg/" + str(i2) + ".jpg", dst2)

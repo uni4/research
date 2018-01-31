@@ -4,8 +4,15 @@ import cv2
 import numpy as np
 import sys
 from scipy.spatial import distance
+import matplotlib.pyplot as plt
 import time
-import print as pt
+import os.path
+import fingerprint_edit as pt
+import hist
+import datetime
+from PIL import Image, ImageDraw, ImageFont
+sys.path.append("create/study-master/objectdetection/models/research/object_detection/")
+import recog_hand as recog
 
 #ベクトルの正規化
 def normalize(v, axis=-1, order=2):
@@ -20,42 +27,96 @@ def min_max(x, axis=None):
     result = (x-mi)/(ma-mi)
     return result
 
+#元データを平均0、標準偏差が1のものに変換する正規化
+def zscore(x):
+    xmean = x.mean()
+    xstd  = np.std(x)
+
+    zscore = (x-xmean)/xstd
+    return zscore
+
 
 #肌色領域のみを抽出
-def mask(param,p_number):
-	print("肌色領域抽出開始")
-	print(p_number)
-	# 画像を取得
-	img = cv2.imread("%s"%param[p_number])
-
+def mask(img,name,index):
+	print(str(index+1) + "回目肌色領域抽出開始")
+	
+	#ヒストグラム平坦化
+	#hsv = hist.hist(img)
+	height, width = img.shape[:2]
+	
 	# フレームをHSVに変換
 	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+	#Y : 198.562	Cb : -29.112	Cr : 30.252	
+	hcc = cv2.cvtColor(img, cv2.COLOR_BGR2YCR_CB)
+	# 取得する色の範囲を指定する
+	lower_hcc = np.array([100, 64, 50])
+	upper_hcc = np.array([235, 160, 255])
 
 	# 取得する色の範囲を指定する
 	lower = np.array([0, 30, 130])
 	upper = np.array([30, 150, 255])
+	
+	
+	height,width = img.shape[:2]
+	xmin = int(width/2 - width/4)
+	xmax = int(width/2 + width/4)
+	ymin = int(height/2 - height/4)
+	ymax = int(height/2 + height/4)
+	img_copy = hsv[ymin:ymax, xmin:xmax]
+	
+	#img_copy = hist.hada(img)
+	img_bgr = cv2.split(img_copy)
+	h = img_bgr[0].flatten()
+	s = img_bgr[1].flatten()
+	v = img_bgr[2].flatten()
+	plt.figure()
+	bins_range = range(0, 257, 8)
+	xtics_range = range(0, 257, 32)
+	plt.hist((h, s, v), bins=bins_range,
+			 color=['r', 'g', 'b'], label=['Hue', 'Saturation', 'Value'])
+	plt.legend(loc=2)
+	plt.grid(True)
+	[xmin, xmax, ymin, ymax] = plt.axis()
+	plt.axis([0, 256, 0, ymax])
+	plt.xticks(xtics_range)
+	img_copy = cv2.cvtColor(img_copy, cv2.COLOR_HSV2BGR)
+	cv2.imwrite("work/" + str(name) + "/" + str(name) + str(index) +"_histrange.jpg", img_copy)
+	plt.savefig("work/" + str(name) + "/" + str(name) + str(index) +"_hist.jpg")
+	
+	plt.figure()
+	htd = hist.hada(img)
+
+	lower = np.array([0, htd[0], htd[2]])
+	upper = np.array([30, htd[1], htd[3]])
 
 	# 指定した色に基づいたマスク画像の生成
 	img_mask = cv2.inRange(hsv, lower, upper)
+	img_mask_hcc = cv2.inRange(hcc, lower_hcc, upper_hcc)
+	#img = cv2.circle(img,(x,y), 20, (0,0,255), -1)
+	#cv2.imwrite("work/" + str(name) + "/" + str(name) + str(index) +"_mask_hcc.jpg", img_mask_hcc)
+	#cv2.imwrite("img.jpg",img)
+
 
 	#フレーム画像とマスク画像の共通の領域を抽出する。
 	img_color = cv2.bitwise_and(img, img, mask=img_mask)
 	#img_color = cv2.cvtColor(img_color, cv2.COLOR_HSV2BGR)
 
-	cv2.imwrite("color.jpg", img_color)
-	print("肌色領域抽出終了")
+	cv2.imwrite("work/" + str(name) + "/" + str(name) + str(index) +"_color.jpg", img_color)
+	print(str(index+1) + "回目肌色領域抽出終了")
 
 	return img_color
 
 #最大面積を抽出することでノイズを除去
-def labelling(im,p_number):
-	print("最大面積領域の抽出開始")
+def labelling(im,name,index):
+	print(str(index+1) + "回目最大面積領域の抽出開始")
 	height, width = im.shape[:2]
 	kernel = np.ones((10,10),np.uint8)
 
 	# グレースケール変換
 	gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 	gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+	cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_gray.jpg",gray)
 	label = cv2.connectedComponentsWithStats(gray)
 
 	data = np.delete(label[2], 0, 0)
@@ -67,11 +128,11 @@ def labelling(im,p_number):
 	dst[dst!=255] = 0
 
 	dst = dst.reshape((height, width))
-	cv2.imwrite("kekka_totyu.jpg",dst)
-	print("最大面積領域を抽出終了")
-	im_re = cv2.imread("kekka_totyu.jpg")
+	cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_totyu.jpg",dst)
+	print(str(index+1) + "回目最大面積領域を抽出終了")
+	im_re = cv2.imread("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_totyu.jpg")
 
-	print("クロージング処理開始")
+	print(str(index+1) + "回目クロージング処理開始")
 	# グレースケール変換
 	gray2 = cv2.cvtColor(im_re, cv2.COLOR_BGR2GRAY)
 	gray2 = cv2.threshold(gray2, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
@@ -80,15 +141,15 @@ def labelling(im,p_number):
 	image, contours, hierarchy = cv2.findContours(gray2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 	im_con = cv2.drawContours(im_re, contours, 0, (255,255,255), -1,)
 
-	cv2.imwrite("kekka.jpg",im_con)
+	cv2.imwrite("work/" + str(name) + "/" + str(name) +  "_" + str(index) +"kekka.jpg",im_con)
 	closing = cv2.morphologyEx(im_con, cv2.MORPH_CLOSE, kernel)
-	cv2.imwrite("closing10_" + str(p_number) + ".jpg", closing)
-	print("クロージング処理終了")
+	cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"closing10_" + ".jpg", closing)
+	print(str(index+1) + "回目クロージング処理終了")
 
 	return closing
 
 #指先を抽出する処理
-def yubisaki(im,p_number):
+def yubisaki(im,name,index):
 
 	height,width = im.shape[:2]
 	gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
@@ -106,12 +167,28 @@ def yubisaki(im,p_number):
 	y_center = int(center[max_index -1][1])
 	
 	dst = label[1]
+	
 	list = []
 	list2 = []
 	list_hen = []
+	
 	a = np.array([y_center,x_center])
-	print("重心と各画素の距離を算出開始")
+	print(str(index+1) + "回目重心と各画素の距離を算出開始")
 	tt1 = time.time()
+	
+	
+	x=np.arange(width).reshape([1,width])
+	y=np.arange(height).reshape([height,1])
+	euclidean=((x-a[1])**2+(y-a[0])**2)**0.5
+	euclidean = euclidean.reshape((-1))
+	euclidean = min_max(euclidean)
+	euclidean = euclidean.reshape((height, width))
+	ave=np.average(euclidean[dst==max_index]) 
+
+	print("ave",ave)
+	#euclidean[(dst==max_index)*(euclidean<(2 * ave) -0.1)]=0
+	euclidean[(dst==max_index)*(euclidean< 0.7)]=0
+	im[euclidean==0] = [0,0,0]
 
 	"""
 	for y in range(height):
@@ -119,26 +196,17 @@ def yubisaki(im,p_number):
 			if dst[y][x] == max_index:
 				b = np.array([y,x])
 				list.append(distance.euclidean(a,b))
-	"""
+	
+	
 
-	list = np.array([distance.euclidean(a,dst[dst==max_index])])
-	print(list)
-
-	"""
-	y = range(0,height)
-	x = range(0,width)
-	#list = np.array([(y,x) for y in y for x in x distance.euclidean(a,[y,x]) if dst[y][x] == max_index])
-	list = np.array([(y,x) for y in y for x in x if dst[y][x] == max_index])
-
-	"""
-
-	print("重心と各画素の距離を算出終了")
+	print(str(index+1) + "回目重心と各画素の距離を算出終了")
 	#ave = np.mean(list)
+	#距離の正規化
 	list = min_max(list)
-	#print("list",list)
+	#正規化した距離の平均を出す
 	ave = np.average(list)
 	print("ave",ave)
-	print("指先の抽出開始")
+	print(str(index+1) + "回目指先の抽出開始")
 
 	i = 0
 	for y in range(height):
@@ -147,45 +215,130 @@ def yubisaki(im,p_number):
 				deviation = list[i] - ave
 				i += 1
 				list2.append(deviation)
-				#print(deviation)
 				if (deviation) < ave - 0.1:
 					im[y][x] = (0,0,0)
-
-
-
 	"""
-	for y in range(height):
-		for x in range(width):
-			if dst[y][x] == max_index:
-				c = np.array([y,x])
-				dis = distance.euclidean(a,c)
-				list2.append(dis - ave)
-				if (dis - ave) < 800:
-					im[y][x] = (0,0,0)
-	"""
+	
+	
+
+	txt = str(ave) + "\n"
+	f = open('log.txt', 'a') # 書き込みモードで開く
+	#f.write(str(name))
+	#f.write("\n")
+	f.write(str(txt)) # 引数の文字列をファイルに書き込む
+	f.close()
 
 	tt2 = time.time()
-	print("2重ループ処理の時間",tt2- tt1)
+	print(str(index+1) + "回目2重ループ処理の時間",tt2- tt1)
 	print("指先の抽出終了")
-	ave2 = np.average(list2)
-	su = np.sum(list2)
-	cv2.imwrite("saki" + str(p_number) + ".jpg", im)
+	#ave2 = np.average(list2)
+	#su = np.sum(list2)
+	cv2.imwrite("work/" + str(name) + "/" + str(name) + str(index) + "_saki" +".jpg", im)
 
 	return im
 
 def main():
+	f = open('log.txt', 'a') # 書き込みモードで開く
+	now = datetime.datetime.now()
+	f.write(str(now))
+	f.write("\n")
+	"""
+	name, ext = os.path.splitext(param[1])
+	img = cv2.imread("/Users/dennomaaya/Desktop/py/work/" + str(name) + "/a" + str(param[1]))
+	mask(img,name,0)
+	"""
 	t1 = time.time() 
 
 	p_number = 1
+	
 	for p_number in range(1,len(param)):
-		gazou = labelling(mask(param,p_number),p_number)
-		gazou2 = yubisaki(gazou,p_number)
-		pt.finger_edit(param, gazou2,p_number)
+		time1 = time.time()
+		img_array = []
+		img_array_saki = []
 
+		#画像を読み込む
+		#img = cv2.imread("%s"%param[p_number])
+		image = Image.open("%s"%param[p_number])
+		name, ext = os.path.splitext(param[p_number])
+		print("ファイル名",name)
+		f = open('log.txt', 'a') # 書き込みモードで開く
+		f.write(str(name))
+		f.write("\n")
+		f.close()
+		
+		#作業領域の生成(recog_handで行うためいらない)
+		if os.path.exists("/Users/dennomaaya/Desktop/py/work/" + str(name)) == False:
+			os.mkdir("/Users/dennomaaya/Desktop/py/work/" + str(name))
+		
+		image.save("/Users/dennomaaya/Desktop/py/work/" + str(name) + "/a" + str(param[p_number]),quality=100)
+		#cv2.imwrite("/Users/dennomaaya/Desktop/py/work/" + str(name) + "/a" + str(param[p_number]),img)
+		img = cv2.imread("/Users/dennomaaya/Desktop/py/work/" + str(name) + "/a" + str(param[p_number]))
+		#mask(img,name,0)
+		
+		#画像から手領域の座標を検出
+		t_reco1 = time.time()
+		print("手が存在する領域の抽出開始")
+		hand_range = np.array([recog.hand_detection(param[p_number])])
+		t_reco2 = time.time()
+		print("手が存在する領域の抽出終了")
+		print("手領域探索時間",t_reco2 - t_reco1)
+
+
+
+		index = 0
+		if hand_range != []:
+			while index != hand_range.shape[1]:
+				#手の範囲の画像を取得する
+				ymin, xmin, ymax, xmax = map(int,hand_range[0][index])
+				#img_copy = img[ymin:ymax, xmin:xmax]
+				img_copy = img[xmin:xmax, ymin:ymax]
+				cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_cut.jpg", img_copy)
+
+				#画像を配列に格納する
+				img_array.append(img_copy)
+
+				#画像から手だけを抽出する
+				gazou = labelling(mask(img_copy,name,index),name,index)
+
+				#手から指先のみを抽出する
+				gazou2 = yubisaki(gazou,name,index)
+
+				#指先画像を配列に格納する
+				img_array_saki.append(gazou2)
+				index += 1
+
+			#指先の指紋を消す
+			pt.finger_edit(img, img_array_saki,hand_range,name)
+			time2 = time.time()
+			print(str(param[p_number]),"の加工時間",time2 - time1)
+			print("")
+			f = open('log.txt', 'a') # 書き込みモードで開く
+			f.write(str("加工時間"))
+			f.write(str(time2-time1))
+			f.write("\n")
+			f.close()
+				
+		else:
+			time2 = time.time()
+			no_image = cv2.imread("/Users/dennomaaya/Desktop/py/create/no_finger_print.jpg")
+			cv2.imwrite("work/" + str(name) + "/a" + str(name) + "print" + ".jpg", no_image)
+			print(str(param[p_number]),"は加工しない",time2 - time1)
+			print("")
+
+			f = open('log.txt', 'a') # 書き込みモードで開く
+			f.write(str("加工時間"))
+			f.write(str(time2-time1))
+			f.write("\n")
+			f.close()
+		
+		
 	t2 = time.time()
 	elapsed_time = t2-t1
 	print(f"経過時間：{elapsed_time}")
-
+	f = open('log.txt', 'a') # 書き込みモードで開く
+	f.write("\n")
+	f.close() # ファイルを閉じる
+	
 if __name__ == '__main__':
 	param = sys.argv
 	main()
