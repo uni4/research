@@ -56,21 +56,23 @@ def finger_edit(im,im_fil,hand_range,name):
 			w = data[index,2]
 			h = data[index,3]
 			img_copy = image[y:y+h, x:x+w]
-			#img_copy = image[ymin:ymax, xmin:xmax]
+			filter_copy = im_filter[y:y+h, x:x+w]
+			filter_copy = cv2.cvtColor(filter_copy, cv2.COLOR_BGR2GRAY)
+			filter_copy = cv2.threshold(filter_copy, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
 			height, width = img_copy.shape[:2]
 
 			#ヒストグラムを作成する
-			hsv = cv2.cvtColor(img_copy, cv2.COLOR_BGR2HSV)
-			lower = np.array([0, 30, 60])
-			upper = np.array([30, 150, 255])
-			mask = cv2.inRange(hsv, lower, upper)
-			img_mask = cv2.bitwise_and(img_copy, img_copy, mask=mask)
-			img_mask = cv2.morphologyEx(img_mask, cv2.MORPH_CLOSE, c_kernel)
+			#hsv = cv2.cvtColor(img_copy, cv2.COLOR_BGR2HSV)
+			#lower = np.array([0, 30, 60])
+			#upper = np.array([30, 150, 255])
+			#mask = cv2.inRange(hsv, lower, upper)
+			img_mask = cv2.bitwise_and(img_copy, img_copy, mask=filter_copy)
+			#img_mask = cv2.morphologyEx(img_mask, cv2.MORPH_CLOSE, c_kernel)
 			img_cc = addweight(img_copy,1,0.5,0)
 			img_cc = cv2.morphologyEx(img_mask, cv2.MORPH_OPEN, c_kernel)
-			gray2 = cv2.threshold(mask, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-			hist_mask = cv2.calcHist([img_copy],[0],mask,[256],[0,256])
+			#gray2 = cv2.threshold(filter_copy, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+			#ist_mask = cv2.calcHist([img_copy],[0],filter_copy,[256],[0,256])
 			#plt.subplot(index + 221), plt.plot(hist_mask)
 
 			#肌色の部分を変換する
@@ -86,11 +88,11 @@ def finger_edit(im,im_fil,hand_range,name):
 						#img_copy[y_index, x_index] = img_cc[y_index, x_index]
 						img_copy[y_index, x_index] = [0,0,255]
 			cv2.imwrite("work/" + str(name) + "/" + str(name) + "range_" + str(index+1) +".jpg", img_copy)
-			cv2.imwrite("work/" + str(name) + "/" + str(name) + "mask_" + str(index+1) +".jpg", img_mask)
+			cv2.imwrite("work/" + str(name) + "/" + str(name) + "mask_" + str(index+1) +".jpg", filter_copy)
 
 	print("指紋部分の処理終了")
 	cv2.imwrite("work/" + str(name) + "/a" + str(name) + "print" + ".jpg", im,[cv2.IMWRITE_JPEG_QUALITY,100])
-	plt.xlim([0,256])
+	#plt.xlim([0,256])
 	#plt.show()
 
 def main():

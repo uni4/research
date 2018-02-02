@@ -10,14 +10,14 @@ def main():
 	gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	image, contours, hierarchy = cv2.findContours(gray,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 	#image, contours, hierarchy = cv2.findContours(gray,1,2)
-	im_con = cv2.drawContours(im, contours, 0, (255,255,255), -1,1)
+	im_con = cv2.drawContours(im, contours, -1, (255,255,255), -1,1)
 	cnt = contours[0]
 	M = cv2.moments(cnt)
 	cx = int(M['m10']/M['m00'])
 	cy = int(M['m01']/M['m00'])
-	cv2.circle(im_con,(cx,cy), 20,(0,0,255),-1)
+	cv2.circle(im_con,(cx,cy), 1,(0,0,255),-1)
 
-	aa,bb,cc = (0,100,200)
+	aa,bb,cc = (0,5,10)
 	list = [[]]
 	ren = len(contours[0][:,:])
 
@@ -37,7 +37,7 @@ def main():
 		deg = np.rad2deg(cos)
 
 		if(cos >0 and cos < 60):
-			cv2.circle(im_con,(p2[0],p2[1]), 10,(0,0,255),-1)
+			cv2.circle(im_con,(p2[0],p2[1]), 1,(0,0,255),-1)
 
 		aa += 1
 		bb += 1

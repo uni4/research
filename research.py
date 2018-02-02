@@ -56,6 +56,10 @@ def mask(img,name,index):
 	# 取得する色の範囲を指定する
 	lower = np.array([0, 30, 130])
 	upper = np.array([30, 150, 255])
+
+	htd = hist.hada(img)
+	lower = np.array([0, htd[0], htd[2]])
+	upper = np.array([30, htd[1], htd[3]])
 	
 	
 	height,width = img.shape[:2]
@@ -77,6 +81,7 @@ def mask(img,name,index):
 			 color=['r', 'g', 'b'], label=['Hue', 'Saturation', 'Value'])
 	plt.legend(loc=2)
 	plt.grid(True)
+	plt.title(htd)
 	[xmin, xmax, ymin, ymax] = plt.axis()
 	plt.axis([0, 256, 0, ymax])
 	plt.xticks(xtics_range)
@@ -85,10 +90,6 @@ def mask(img,name,index):
 	plt.savefig("work/" + str(name) + "/" + str(name) + str(index) +"_hist.jpg")
 	
 	plt.figure()
-	htd = hist.hada(img)
-
-	lower = np.array([0, htd[0], htd[2]])
-	upper = np.array([30, htd[1], htd[3]])
 
 	# 指定した色に基づいたマスク画像の生成
 	img_mask = cv2.inRange(hsv, lower, upper)
@@ -117,6 +118,19 @@ def labelling(im,name,index):
 	gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 	gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_gray.jpg",gray)
+
+
+	"""
+	gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+	#第3結果を0にすれば一番外側の輪郭のみを描画するため中身を全て白にできる
+	image, contours, hierarchy = cv2.findContours(gray,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+	gray = cv2.drawContours(gray, contours, -1, (255,255,255), -1,)
+	#cv2.fillPoly(gray, pts =[contours], color=(0,0,255))
+	cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_gray2.jpg",gray)
+	"""
+
+
+
 	label = cv2.connectedComponentsWithStats(gray)
 
 	data = np.delete(label[2], 0, 0)
@@ -138,8 +152,8 @@ def labelling(im,name,index):
 	gray2 = cv2.threshold(gray2, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
 	#第3結果を0にすれば一番外側の輪郭のみを描画するため中身を全て白にできる
-	image, contours, hierarchy = cv2.findContours(gray2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-	im_con = cv2.drawContours(im_re, contours, 0, (255,255,255), -1,)
+	image, contours, hierarchy = cv2.findContours(gray2,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+	im_con = cv2.drawContours(im_re, contours, -1, (255,255,255), -1,)
 
 	cv2.imwrite("work/" + str(name) + "/" + str(name) +  "_" + str(index) +"kekka.jpg",im_con)
 	closing = cv2.morphologyEx(im_con, cv2.MORPH_CLOSE, kernel)
@@ -154,7 +168,7 @@ def yubisaki(im,name,index):
 	height,width = im.shape[:2]
 	gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
 	gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-	cv2.rectangle(gray, (height-200, height-1), (width-1, height-1), (0, 0, 0), -1)
+	#cv2.rectangle(gray, (height-200, height-1), (width-1, height-1), (0, 0, 0), -1)
 
 	label = cv2.connectedComponentsWithStats(gray)
 	# ブロブ情報を項目別に抽出
@@ -165,7 +179,7 @@ def yubisaki(im,name,index):
 
 	x_center = int(center[max_index -1][0])
 	y_center = int(center[max_index -1][1])
-	
+
 	dst = label[1]
 	
 	list = []
@@ -186,8 +200,8 @@ def yubisaki(im,name,index):
 	ave=np.average(euclidean[dst==max_index]) 
 
 	print("ave",ave)
-	#euclidean[(dst==max_index)*(euclidean<(2 * ave) -0.1)]=0
-	euclidean[(dst==max_index)*(euclidean< 0.7)]=0
+	euclidean[(dst==max_index)*(euclidean<(2 * ave) -0.1)]=0
+	#euclidean[(dst==max_index)*(euclidean< 0.8)]=0
 	im[euclidean==0] = [0,0,0]
 
 	"""
@@ -229,7 +243,7 @@ def yubisaki(im,name,index):
 	f.close()
 
 	tt2 = time.time()
-	print(str(index+1) + "回目2重ループ処理の時間",tt2- tt1)
+	#print(str(index+1) + "回目2重ループ処理の時間",tt2- tt1)
 	print("指先の抽出終了")
 	#ave2 = np.average(list2)
 	#su = np.sum(list2)
@@ -274,6 +288,7 @@ def main():
 		#cv2.imwrite("/Users/dennomaaya/Desktop/py/work/" + str(name) + "/a" + str(param[p_number]),img)
 		img = cv2.imread("/Users/dennomaaya/Desktop/py/work/" + str(name) + "/a" + str(param[p_number]))
 		#mask(img,name,0)
+		#labelling(mask(img,name,0),name,0)
 		
 		#画像から手領域の座標を検出
 		t_reco1 = time.time()
@@ -320,7 +335,7 @@ def main():
 				
 		else:
 			time2 = time.time()
-			no_image = cv2.imread("/Users/dennomaaya/Desktop/py/create/no_finger_print.jpg")
+			no_image = cv2.imread("/Users/dennomaaya/Desktop/py/create/miserarenaiyo.jpg")
 			cv2.imwrite("work/" + str(name) + "/a" + str(name) + "print" + ".jpg", no_image)
 			print(str(param[p_number]),"は加工しない",time2 - time1)
 			print("")

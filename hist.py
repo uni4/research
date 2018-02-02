@@ -69,40 +69,90 @@ def hada(im):
 	v_count = np.array([])
 	s_sum = np.array([])
 	v_sum = np.array([])
+	max_in = np.array([])
 
 	max_sv = []
-	index = 0
 	for i in range(0,257):
 		s_sum = s_sum + np.sum(s==i)
 		v_sum = v_sum + np.sum(v==i)
 		if i%8==0 and i >16:
 			s_count = np.append(s_count,s_sum)
+		if i%8==0 and i >16:
 			v_count = np.append(v_count,v_sum)
+		if i%8==0:
 			s_sum = 0
 			v_sum = 0
 			#s_count = np.append(s_count,np.array([np.sum(s==i)]))
 			#v_count = np.append(v_count,np.array([np.sum(v==i)]))
-			index +=1
-	s_max = s_count.argmax() * 8 +16
-	v_max = v_count.argmax() * 8 +16
-	"""
-	#肌色の閾値を決める
-	まず一番値が集中しているところを基準値とする。その前後の値の数を
-	
-	#HSVの各要素数を求める
-	color_number = len(h)
-	a = 0
-	flag = True
-	s_sort = np.argsort(x)[::-1][i]
-	s_max = s_count.argmax() * 8 +16
-	v_max = v_count.argmax() * 8 +16
-	
-	s_seiki = min_max(s_count)
-	v_seiki = min_max(v_count)
-	bins_range = range(0, len(s_seiki), 1)
-	xtics_range = range(0, len(s_seiki), 1)
-	"""
 
+
+	flag = True
+	index = 0
+	max_index = 0
+	s_range = np.array([])
+	total_tresh = len(h)*0.6
+	while flag == True:	
+		max_index = np.argsort(s_count)[::-1][index]
+		#print("s_max_index",max_index*8 +24)
+		s1_index = max_index -1
+		s2_index = max_index +1
+		tresh = s_count[max_index] * 0.2
+		s_sum = s_sum + s[max_index]
+		s_range = np.append(s_range,max_index)
+		while s1_index > 0 and s_count[s1_index] > tresh:
+			s_sum = s_sum + s_count[s1_index]
+			s_range = np.append(s_range,s1_index)
+			s1_index -= 1 
+		while s2_index < len(s_count) and s_count[s2_index] > tresh:
+			s_sum = s_sum + s_count[s2_index]
+			s_range = np.append(s_range,s2_index)
+			s2_index += 1
+		if s_sum >  total_tresh:
+			flag = False
+			#print("sの最終最大値",max_index*8 +24)
+			max_in = np.append(max_in,max_index*8 +24)
+		else:
+			index+=1
+			s_range = np.array([])
+
+	flag = True
+	index = 0
+	max_index = 0
+	v_range = np.array([])				
+	while flag == True:	
+		max_index = np.argsort(v_count)[::-1][index]
+		#print("v_max_index",max_index*8 +24)
+		v1_index = max_index -1
+		v2_index = max_index +1
+		tresh = v_count[max_index] * 0.2
+		v_sum = v_sum + v[max_index]
+		v_range = np.append(v_range,max_index)
+		while v1_index > 0 and v_count[v1_index] > tresh:
+			v_sum = v_sum + v_count[v1_index]
+			v_range = np.append(v_range,v1_index)
+			v1_index -= 1 
+		while v2_index < len(v_count) and v_count[v2_index] > tresh:
+			v_sum = v_sum + v_count[v2_index]
+			v_range = np.append(v_range,v2_index)
+			v2_index += 1
+		if v_sum >  total_tresh:
+			flag = False
+			#print("vの最終最大値",max_index*8 +24)
+			max_in = np.append(max_in,max_index*8 +24)
+		else:
+			index+=1
+			v_range = np.array([])
+
+
+	s_range = np.sort(s_range)
+	v_range = np.sort(v_range)
+	print("s_range",s_range)
+	print("v_range",v_range)
+	max_sv.extend([s_range[0]*8+24,s_range[-1]*8 +24])
+	max_sv.extend([v_range[0]*8+24,v_range[-1]*8 +24])
+	max_sv.extend(max_in)
+
+	"""
 	if s_max-40 < 0:
 		max_sv.append(16)
 	else:
@@ -119,9 +169,11 @@ def hada(im):
 		max_sv.append(255)
 	else:
 		max_sv.append(v_max+40)
+	"""
 
 	#max_sv = []
-	print(max_sv)
+	#print("閾値",max_sv)
+	
 
 	"""
 	for i in range(0,257):
@@ -133,23 +185,6 @@ def hada(im):
 			hsv_min[0] = i
 		if hsv_min[1]>v_count[i] and v_count[i]>threshold:
 			hsv_min[1] =  i
-	
-	
-			
-	bins_range = range(0, 257, 8)
-	xtics_range = range(0, 257, 32)
-
-	plt.hist((h, s, v), bins=bins_range,
-			 color=['r', 'g', 'b'], label=['Red', 'Green', 'Blue'])
-	plt.legend(loc=2)
-
-	plt.grid(True)
-
-	[xmin, xmax, ymin, ymax] = plt.axis()
-	plt.axis([0, 256, 0, ymax])
-	plt.xticks(xtics_range)
-
-	plt.savefig("histogram_single2.jpg")
 	"""
 	
 	#return hsv_threshold
