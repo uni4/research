@@ -53,7 +53,7 @@ def hist(img):
 	"""
 def hada(im):
 	#im = cv2.imread("%s"%param[1])
-	im = photo_cut(im)
+	#im = photo_cut(im)
 	im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
 	#im = hada_range(im)
 	img_bgr = cv2.split(im)
@@ -90,7 +90,8 @@ def hada(im):
 	index = 0
 	max_index = 0
 	s_range = np.array([])
-	total_tresh = len(h)*0.6
+	total_tresh = sum(s_count) *0.35
+	#print("長さ",total_tresh)
 	while flag == True:	
 		max_index = np.argsort(s_count)[::-1][index]
 		#print("s_max_index",max_index*8 +24)
@@ -110,10 +111,11 @@ def hada(im):
 		if s_sum >  total_tresh:
 			flag = False
 			#print("sの最終最大値",max_index*8 +24)
-			max_in = np.append(max_in,max_index*8 +24)
+			max_in = np.append(max_in,max_index*8+24)
 		else:
 			index+=1
 			s_range = np.array([])
+			s_sum = 0
 
 	flag = True
 	index = 0
@@ -125,6 +127,8 @@ def hada(im):
 		v1_index = max_index -1
 		v2_index = max_index +1
 		tresh = v_count[max_index] * 0.2
+		print(max_index*8 +24,"最大値",v_count[max_index])
+		print("閾値",tresh)
 		v_sum = v_sum + v[max_index]
 		v_range = np.append(v_range,max_index)
 		while v1_index > 0 and v_count[v1_index] > tresh:
@@ -138,18 +142,16 @@ def hada(im):
 		if v_sum >  total_tresh:
 			flag = False
 			#print("vの最終最大値",max_index*8 +24)
-			max_in = np.append(max_in,max_index*8 +24)
+			max_in = np.append(max_in,max_index*8+24)
 		else:
 			index+=1
 			v_range = np.array([])
-
+			v_sum = 0
 
 	s_range = np.sort(s_range)
 	v_range = np.sort(v_range)
-	print("s_range",s_range)
-	print("v_range",v_range)
-	max_sv.extend([s_range[0]*8+24,s_range[-1]*8 +24])
-	max_sv.extend([v_range[0]*8+24,v_range[-1]*8 +24])
+	max_sv.extend([s_range[0]*8+16,s_range[-1]*8+36])
+	max_sv.extend([v_range[0]*8+16,v_range[-1]*8+36])
 	max_sv.extend(max_in)
 
 	"""

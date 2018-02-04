@@ -85,8 +85,8 @@ def finger_edit(im,im_fil,hand_range,name):
 					g1 = img_cc[y_index, x_index,1]
 					r1 = img_cc[y_index, x_index,2]  
 					if blue != 0 and green != 0 and red != 0 and b1 != 0 and g1 != 0 and r1 != 0:
-						#img_copy[y_index, x_index] = img_cc[y_index, x_index]
-						img_copy[y_index, x_index] = [0,0,255]
+						img_copy[y_index, x_index] = img_cc[y_index, x_index]
+						#img_copy[y_index, x_index] = [0,0,255]
 			cv2.imwrite("work/" + str(name) + "/" + str(name) + "range_" + str(index+1) +".jpg", img_copy)
 			cv2.imwrite("work/" + str(name) + "/" + str(name) + "mask_" + str(index+1) +".jpg", filter_copy)
 
