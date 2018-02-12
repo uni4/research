@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import os.path
 
+
 def threshold(src, ksize, c):
 	
 	# 畳み込み演算をしない領域の幅
@@ -36,12 +37,12 @@ def shimon():
 	# グレースケール変換
 	gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-	for ksize in range(5, 33, 2):
+	for ksize in range(5, 23, 2):
 		# 方法2       
-		dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,ksize,2)
+		#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,ksize,2)
 		#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,ksize,2)
-		#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,ksize,2)黒い
-		#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,ksize,2)黒くなる
+		#dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,ksize,2)#黒い
+		dst2 = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,ksize,2)#黒くなる
 		#dst2 = threshold(gray, ksize, c=2)
 		#dst2 = cv2.resize(dst2, (504, 480), interpolation=cv2.INTER_LINEAR)
 
@@ -49,27 +50,42 @@ def shimon():
 		cv2.imwrite("shimon/" + name + "/" + name + "_shimon" + str(ksize) + ".tif", dst2)
 
 def recog_shimon():
-	img = cv2.imread("shimon/" + "%s"%param[1])
-	name, ext = os.path.splitext(param[1])
-	if os.path.exists("/Users/dennomaaya/Desktop/py/shimon/" + str(name)) == False:
-		os.mkdir("/Users/dennomaaya/Desktop/py/shimon/" + str(name))
+	data_dir_path = u"/Users/dennomaaya/Desktop/py/shimon"
+	file_list = os.listdir(r'/Users/dennomaaya/Desktop/py/shimon')
 
-	for ksize in range(5, 23, 2):
-		# グレースケール変換
-		gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-		#画像を左右反転させる
-		imgaxis_y = cv2.flip(gray, 1)
-		imgtone_flip = invgray = cv2.bitwise_not(imgaxis_y)
-		clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(ksize,ksize))
-		cl1 = clahe.apply(imgaxis_y)
-		dst2 = cv2.adaptiveThreshold(cl1,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,ksize,1)
-		cv2.imwrite("shimon/" + name + "/" + name + "_shimon" + str(ksize) + ".bmp", dst2)
+	for file_name in file_list:
+		name, ext = os.path.splitext(file_name)
+		print(file_name)
+		if ext == u'.png' or u'.jpeg' or u'.jpg' or u'.JPG' and name == ".DS_Store":
+			abs_name = data_dir_path + '/' + file_name
+			img = cv2.imread(abs_name)
+			if os.path.exists("/Users/dennomaaya/Desktop/py/shimon/" + str(name)) == False:
+				os.mkdir("/Users/dennomaaya/Desktop/py/shimon/" + str(name))
+
+			for ksize in range(5, 23, 2):
+				# グレースケール変換
+				gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+				#画像を左右反転させる
+				imgaxis_y = cv2.flip(gray, 1)
+
+				#画像の階調を反転させる
+				invgray = cv2.bitwise_not(imgaxis_y)
+
+				#ヒストグラム平坦化
+				clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(ksize,ksize))
+				cl1 = clahe.apply(imgaxis_y)
+
+				#dst2 = cv2.adaptiveThreshold(cl1,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,ksize,2)
+				#dst2 = cv2.adaptiveThreshold(cl1,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,ksize,2)
+				#dst2 = cv2.adaptiveThreshold(cl1,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,ksize,2)#黒い
+				dst2 = cv2.adaptiveThreshold(cl1,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,ksize,2)#黒くなる
+				cv2.imwrite("shimon/" + name + "/" + name + "_shimon" + str(ksize) + ".tif", dst2)
 
 
 
 def main():
-	shimon()
-	#recog_shimon()
+	#shimon()
+	recog_shimon()
 
 if __name__ == "__main__":
 	param = sys.argv

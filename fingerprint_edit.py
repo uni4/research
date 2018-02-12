@@ -5,6 +5,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from PIL import Image
+import time
 
 #画像を合成するモジュール
 def addweight(img,alpha,beta,ganma):	
@@ -18,6 +19,15 @@ def addweight(img,alpha,beta,ganma):
 	im_add = cv2.addWeighted(gauss, alpha, himg2, beta, ganma)
 	return im_add
 
+#画像を合成するモジュール
+def addweight2(img,alpha,beta,ganma):
+	height, width = img.shape[:2]
+	shimon = cv2.imread("s01.jpg")
+	shimon = cv2.resize(shimon,(width,height))
+	im_add = cv2.addWeighted(img, alpha, shimon, beta, ganma)
+	cv2.imwrite("s.jpg",im_add)
+	return im_add
+
 #重心を計算するモジュール	
 def gravity(image,p_number):
 	image = cv2.imread("closing10_" + str(p_number) + ".jpg")
@@ -27,6 +37,8 @@ def gravity(image,p_number):
 	return x,y
 
 def finger_edit(im,im_fil,hand_range,name):
+	print("指紋部分の処理開始")
+	tt1 = time.time()
 	for i in range(hand_range.shape[1]):
 		ymin, xmin, ymax, xmax = map(int,hand_range[0][i])
 		image = im[xmin:xmax, ymin:ymax]
@@ -44,12 +56,7 @@ def finger_edit(im,im_fil,hand_range,name):
 		data = np.delete(label[2], 0, 0)
 		center = np.delete(label[3], 0, 0)
 		max_index = np.argsort(data[:,4])[::-1][0] + 1
-		#cv2.circle(image, (int(center[max_index][0]),int(center[max_index][1])),10,(255,0,0),-1)
 		
-		#指先を染めるための色情報を作る
-		#flesh = image[int(center[max_index][0]),int(center[max_index][1])]
-		
-		print("指紋部分の処理開始")
 		for index in range(n):
 			x = data[index,0]
 			y = data[index,1]
@@ -68,32 +75,33 @@ def finger_edit(im,im_fil,hand_range,name):
 			#upper = np.array([30, 150, 255])
 			#mask = cv2.inRange(hsv, lower, upper)
 			img_mask = cv2.bitwise_and(img_copy, img_copy, mask=filter_copy)
-			#img_mask = cv2.morphologyEx(img_mask, cv2.MORPH_CLOSE, c_kernel)
-			img_cc = addweight(img_copy,1,0.5,0)
-			img_cc = cv2.morphologyEx(img_mask, cv2.MORPH_OPEN, c_kernel)
-			#gray2 = cv2.threshold(filter_copy, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-			#ist_mask = cv2.calcHist([img_copy],[0],filter_copy,[256],[0,256])
-			#plt.subplot(index + 221), plt.plot(hist_mask)
+			#img_cc = addweight(img_copy,1,0.5,0)
+			#img_cc = addweight2(img_copy,0.5,1,0)
+			img_cc = cv2.morphologyEx(img_copy, cv2.MORPH_OPEN, c_kernel)
 
 			#肌色の部分を変換する
+			img_mask_bgr = cv2.split(img_mask)
+			img_cc_bgr = cv2.split(img_cc)
+			blue = img_mask_bgr[0]
+			green = img_mask_bgr[1]
+			red = img_mask_bgr[2]
+			#img_copy[blue != 0 and green != 0 and red!= 0\
+			#		 and b1 != 0 and g1 != 0 and r1 != 0] = img_cc
+			
 			for y_index in range(height):
-				for x_index in range(width):
-					blue = img_mask[y_index, x_index, 0]
-					green = img_mask[y_index, x_index, 1]
-					red = img_mask[y_index, x_index, 2]
-					b1 = img_cc[y_index, x_index,0] 
-					g1 = img_cc[y_index, x_index,1]
-					r1 = img_cc[y_index, x_index,2]  
-					if blue != 0 and green != 0 and red != 0 and b1 != 0 and g1 != 0 and r1 != 0:
-						img_copy[y_index, x_index] = img_cc[y_index, x_index]
-						#img_copy[y_index, x_index] = [0,0,255]
+				for x_index in range(width):					
+					if blue[y_index, x_index] != 0 and green[y_index, x_index] != 0 and red[y_index, x_index] != 0:
+						#img_copy[y_index, x_index] = img_cc[y_index, x_index]
+						img_copy[y_index, x_index] = [0,0,255]
+			
 			cv2.imwrite("work/" + str(name) + "/" + str(name) + "range_" + str(index+1) +".jpg", img_copy)
 			cv2.imwrite("work/" + str(name) + "/" + str(name) + "mask_" + str(index+1) +".jpg", filter_copy)
 
 	print("指紋部分の処理終了")
+	tt2 = time.time()
+	print("指紋部分の処理時間",tt2- tt1)
 	cv2.imwrite("work/" + str(name) + "/a" + str(name) + "print" + ".jpg", im,[cv2.IMWRITE_JPEG_QUALITY,100])
-	#plt.xlim([0,256])
-	#plt.show()
+
 
 def main():
 	image = cv2.imread("%s"%param[1])

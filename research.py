@@ -35,27 +35,36 @@ def zscore(x):
     zscore = (x-xmean)/xstd
     return zscore
 
+ #画像の暗部を持ち上げる
+ #http://peaceandhilightandpython.hatenablog.com/entry/2016/02/05/004445
+def lookup(img_src,name,index):
+	gamma = 1.8
+	lookUpTable = np.zeros((256, 1), dtype = 'uint8')
+
+	for i in range(256):
+		lookUpTable[i][0] = 255 * pow(float(i) / 255, 1.0 / gamma)
+
+	img_gamma = cv2.LUT(img_src, lookUpTable)
+	cv2.imwrite("work/" + str(name) + "/" + str(name) + str(index) +"_lookup.jpg", img_gamma)
+	return img_gamma
 
 #肌色領域のみを抽出
 def mask(img,name,index):
-	print(str(index+1) + "回目肌色領域抽出開始")
-	
-	#ヒストグラム平坦化
-	#hsv = hist.hist(img)
+	print(str(index) + "回目肌色領域抽出開始")
 	height, width = img.shape[:2]
 	
 	# フレームをHSVに変換
 	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
 	#Y : 198.562	Cb : -29.112	Cr : 30.252	
-	hcc = cv2.cvtColor(img, cv2.COLOR_BGR2YCR_CB)
+	#hcc = cv2.cvtColor(img, cv2.COLOR_BGR2YCR_CB)
 	# 取得する色の範囲を指定する
-	lower_hcc = np.array([100, 64, 50])
-	upper_hcc = np.array([235, 160, 255])
+	#lower_hcc = np.array([100, 64, 50])
+	#upper_hcc = np.array([235, 160, 255])
 
 	# 取得する色の範囲を指定する
-	lower = np.array([0, 30, 130])
-	upper = np.array([30, 150, 255])
+	#lower = np.array([0, 30, 130])
+	#upper = np.array([30, 150, 255])
 
 	htd = hist.hada(img)
 	lower = np.array([0, htd[0], htd[2]])
@@ -69,7 +78,6 @@ def mask(img,name,index):
 	ymax = int(height/2 + height/4)
 	img_copy = hsv[ymin:ymax, xmin:xmax]
 	
-	#img_copy = hist.hada(img)
 	img_bgr = cv2.split(img_copy)
 	h = img_bgr[0].flatten()
 	s = img_bgr[1].flatten()
@@ -81,42 +89,55 @@ def mask(img,name,index):
 			 color=['r', 'g', 'b'], label=['Hue', 'Saturation', 'Value'])
 	plt.legend(loc=2)
 	plt.grid(True)
-	plt.title(htd)
+	#plt.title(htd)
 	[xmin, xmax, ymin, ymax] = plt.axis()
 	plt.axis([0, 256, 0, ymax])
 	plt.xticks(xtics_range)
 	img_copy = cv2.cvtColor(img_copy, cv2.COLOR_HSV2BGR)
 	cv2.imwrite("work/" + str(name) + "/" + str(name) + str(index) +"_histrange.jpg", img_copy)
 	plt.savefig("work/" + str(name) + "/" + str(name) + str(index) +"_hist.jpg")
-	
+	plt.figure()
+
+
+	#元の手の範囲のヒストグラムの作成
+	img_bgr = cv2.split(hsv)
+	h = img_bgr[0].flatten()
+	s = img_bgr[1].flatten()
+	v = img_bgr[2].flatten()
+	bins_range = range(0, 257, 8)
+	xtics_range = range(0, 257, 32)
+	plt.hist((h, s, v), bins=bins_range,
+			 color=['r', 'g', 'b'], label=['Hue', 'Saturation', 'Value'])
+	plt.legend(loc=2)
+	plt.grid(True)
+	[xmin, xmax, ymin, ymax] = plt.axis()
+	plt.axis([0, 256, 0, ymax])
+	plt.xticks(xtics_range)
+	plt.savefig("work/" + str(name) + "/" + str(name) + str(index) +"_histmoto.jpg")
 	plt.figure()
 
 	# 指定した色に基づいたマスク画像の生成
 	img_mask = cv2.inRange(hsv, lower, upper)
-	img_mask_hcc = cv2.inRange(hcc, lower_hcc, upper_hcc)
-	#img = cv2.circle(img,(x,y), 20, (0,0,255), -1)
-	#cv2.imwrite("work/" + str(name) + "/" + str(name) + str(index) +"_mask_hcc.jpg", img_mask_hcc)
-	#cv2.imwrite("img.jpg",img)
-
 
 	#フレーム画像とマスク画像の共通の領域を抽出する。
 	img_color = cv2.bitwise_and(img, img, mask=img_mask)
-	#img_color = cv2.cvtColor(img_color, cv2.COLOR_HSV2BGR)
 
 	cv2.imwrite("work/" + str(name) + "/" + str(name) + str(index) +"_color.jpg", img_color)
-	print(str(index+1) + "回目肌色領域抽出終了")
+	print(str(index) + "回目肌色領域抽出終了")
 
 	return img_color
 
 #最大面積を抽出することでノイズを除去
 def labelling(im,name,index):
-	print(str(index+1) + "回目最大面積領域の抽出開始")
+	print(str(index) + "回目最大面積領域の抽出開始")
 	height, width = im.shape[:2]
 	kernel = np.ones((10,10),np.uint8)
 
 	# グレースケール変換
 	gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-	gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+	#gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+	gray = cv2.threshold(gray,0,255,cv2.THRESH_BINARY)[1]
+	gray = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
 	cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_gray.jpg",gray)
 
 
@@ -143,13 +164,16 @@ def labelling(im,name,index):
 
 	dst = dst.reshape((height, width))
 	cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_totyu.jpg",dst)
-	print(str(index+1) + "回目最大面積領域を抽出終了")
+	print(str(index) + "回目最大面積領域を抽出終了")
 	im_re = cv2.imread("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_totyu.jpg")
 
-	print(str(index+1) + "回目クロージング処理開始")
+	print(str(index) + "回目クロージング処理開始")
 	# グレースケール変換
 	gray2 = cv2.cvtColor(im_re, cv2.COLOR_BGR2GRAY)
-	gray2 = cv2.threshold(gray2, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+	gray2 = cv2.morphologyEx(gray2, cv2.MORPH_CLOSE, kernel)
+	#gray2 = cv2.threshold(gray2, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+	gray2 = cv2.threshold(gray2,10,255,cv2.THRESH_BINARY)[1]
+
 
 	#第3結果を0にすれば一番外側の輪郭のみを描画するため中身を全て白にできる
 	image, contours, hierarchy = cv2.findContours(gray2,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
@@ -158,7 +182,7 @@ def labelling(im,name,index):
 	cv2.imwrite("work/" + str(name) + "/" + str(name) +  "_" + str(index) +"kekka.jpg",im_con)
 	closing = cv2.morphologyEx(im_con, cv2.MORPH_CLOSE, kernel)
 	cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"closing10_" + ".jpg", closing)
-	print(str(index+1) + "回目クロージング処理終了")
+	print(str(index) + "回目クロージング処理終了")
 
 	return closing
 
@@ -167,7 +191,9 @@ def yubisaki(im,name,index):
 
 	height,width = im.shape[:2]
 	gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-	gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+	#gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+	gray = cv2.threshold(gray,10,255,cv2.THRESH_BINARY)[1]
+
 	#cv2.rectangle(gray, (height-200, height-1), (width-1, height-1), (0, 0, 0), -1)
 
 	label = cv2.connectedComponentsWithStats(gray)
@@ -187,8 +213,8 @@ def yubisaki(im,name,index):
 	list_hen = []
 	
 	a = np.array([y_center,x_center])
-	print(str(index+1) + "回目重心と各画素の距離を算出開始")
-	tt1 = time.time()
+	print(str(index) + "回目重心と各画素の距離を算出開始")
+	#tt1 = time.time()
 	
 	
 	x=np.arange(width).reshape([1,width])
@@ -213,14 +239,14 @@ def yubisaki(im,name,index):
 	
 	
 
-	print(str(index+1) + "回目重心と各画素の距離を算出終了")
+	print(str(index) + "回目重心と各画素の距離を算出終了")
 	#ave = np.mean(list)
 	#距離の正規化
 	list = min_max(list)
 	#正規化した距離の平均を出す
 	ave = np.average(list)
 	print("ave",ave)
-	print(str(index+1) + "回目指先の抽出開始")
+	print(str(index) + "回目指先の抽出開始")
 
 	i = 0
 	for y in range(height):
@@ -242,9 +268,9 @@ def yubisaki(im,name,index):
 	f.write(str(txt)) # 引数の文字列をファイルに書き込む
 	f.close()
 
-	tt2 = time.time()
-	#print(str(index+1) + "回目2重ループ処理の時間",tt2- tt1)
-	print("指先の抽出終了")
+	#tt2 = time.time()
+	#print(str(index) + "回目2重ループ処理の時間",tt2- tt1)
+	#print("指先の抽出終了")
 	#ave2 = np.average(list2)
 	#su = np.sum(list2)
 	cv2.imwrite("work/" + str(name) + "/" + str(name) + str(index) + "_saki" +".jpg", im)
@@ -271,7 +297,6 @@ def main():
 		img_array_saki = []
 
 		#画像を読み込む
-		#img = cv2.imread("%s"%param[p_number])
 		image = Image.open("%s"%param[p_number])
 		name, ext = os.path.splitext(param[p_number])
 		print("ファイル名",name)
@@ -300,17 +325,17 @@ def main():
 
 
 
-		index = 0
+		index = 1
 		if hand_range != []:
-			while index != hand_range.shape[1]:
+			while index != hand_range.shape[1]+1:
 				#手の範囲の画像を取得する
-				ymin, xmin, ymax, xmax = map(int,hand_range[0][index])
-				#img_copy = img[ymin:ymax, xmin:xmax]
+				ymin, xmin, ymax, xmax = map(int,hand_range[0][index-1])
 				img_copy = img[xmin:xmax, ymin:ymax]
 				cv2.imwrite("work/" + str(name) + "/" + str(name) + "_" + str(index) +"_cut.jpg", img_copy)
 
 				#画像を配列に格納する
-				img_array.append(img_copy)
+				#img_array.append(img_copy)
+				#img_copy = lookup(img_copy,name,index)
 
 				#画像から手だけを抽出する
 				gazou = labelling(mask(img_copy,name,index),name,index)
